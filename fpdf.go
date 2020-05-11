@@ -653,6 +653,29 @@ func (f *Fpdf) open() {
 	f.state = 1
 }
 
+//Creates table of contents based on outline
+func (f *Fpdf) createToC() {
+	f.AddPage()
+	f.Cell(0, 6, "Table of Contents")
+	f.Ln(16)
+	for _, outline := range f.outlines {
+		outline.p++
+		f.Cell(0, 6, fmt.Sprintf("%s \t %d", outline.text, outline.p))
+		f.Ln(6)
+	}
+	tmp := f.pages[f.PageNo()]
+	// Insert TOC at start
+	for i := 1; i < len(f.pages); i++ {
+		tmp2 := f.pages[i]
+		f.pages[i] = tmp
+		tmp = tmp2
+	}
+}
+
+func (f *Fpdf) GenerateToC(toc bool) {
+	f.toc = toc
+}
+
 // Close terminates the PDF document. It is not necessary to call this method
 // explicitly because Output(), OutputAndClose() and OutputFileAndClose() do it
 // automatically. If the document contains no page, AddPage() is called to
@@ -685,6 +708,10 @@ func (f *Fpdf) Close() {
 		f.footerFncLpi(true)
 	}
 	f.inFooter = false
+
+	if f.toc {
+		f.createToC()
+	}
 
 	// Close page
 	f.endpage()
