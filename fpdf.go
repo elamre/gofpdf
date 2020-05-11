@@ -657,12 +657,18 @@ func (f *Fpdf) open() {
 func (f *Fpdf) createToC() {
 	f.AddPage()
 	f.Cell(0, 6, "Table of Contents")
-	f.Ln(16)
+	f.Ln(6)
 	for _, outline := range f.outlines {
-		outline.p++
-		f.Cell(0, 6, fmt.Sprintf("%s \t %d", outline.text, outline.p))
+		//f.Cell(0, 6, fmt.Sprintf("%s \t %d", outline.text, outline.p))
+		ss := outline.text
+		for i := 1; i < outline.level; i++ {
+			ss = "\t\t" + ss
+		}
+		f.WriteAligned(0, 35, ss, "L")
+		f.WriteAligned(0, 35, fmt.Sprintf("p.%d", outline.p), "R")
 		f.Ln(6)
 	}
+
 	tmp := f.pages[f.PageNo()]
 	// Insert TOC at start
 	for i := 1; i < len(f.pages); i++ {
@@ -700,6 +706,9 @@ func (f *Fpdf) Close() {
 			return
 		}
 	}
+	if f.toc {
+		f.createToC()
+	}
 	// Page footer
 	f.inFooter = true
 	if f.footerFnc != nil {
@@ -708,10 +717,6 @@ func (f *Fpdf) Close() {
 		f.footerFncLpi(true)
 	}
 	f.inFooter = false
-
-	if f.toc {
-		f.createToC()
-	}
 
 	// Close page
 	f.endpage()
@@ -2225,7 +2230,7 @@ func (f *Fpdf) Bookmark(txtStr string, level int, y float64) {
 	if f.isCurrentUTF8 {
 		txtStr = utf8toutf16(txtStr)
 	}
-	f.outlines = append(f.outlines, outlineType{text: txtStr, level: level, y: y, p: f.PageNo(), prev: -1, last: -1, next: -1, first: -1})
+	f.outlines = append(f.outlines, outlineType{text: txtStr, level: level, y: y, p: f.PageNo() + 1, prev: -1, last: -1, next: -1, first: -1})
 }
 
 // Text prints a character string. The origin (x, y) is on the left of the
@@ -4816,6 +4821,7 @@ func (f *Fpdf) enddoc() {
 	if f.err != nil {
 		return
 	}
+
 	// Bookmarks
 	f.putbookmarks()
 	// Metadata
