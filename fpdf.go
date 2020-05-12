@@ -660,11 +660,17 @@ func (f *Fpdf) createToC() {
 	f.Ln(6)
 	for _, outline := range f.outlines {
 		//f.Cell(0, 6, fmt.Sprintf("%s \t %d", outline.text, outline.p))
-		ss := outline.text
-		for i := 1; i < outline.level; i++ {
-			ss = "\t\t" + ss
+		ss := ""
+		for _, c := range outline.text {
+			if c > 0 && c < 130 {
+				ss += string(c)
+			}
 		}
-		f.WriteAligned(0, 35, ss, "L")
+		for i := 1; i < outline.level; i++ {
+			ss = "    " + ss
+		}
+		// f.WriteAligned(0, 35, ss, "L")
+		f.Write( 35, ss)
 		f.WriteAligned(0, 35, fmt.Sprintf("p.%d", outline.p), "R")
 		f.Ln(6)
 	}
